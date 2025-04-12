@@ -1,0 +1,185 @@
+/* Base styles for mobile responsiveness */
+:root {
+    --page-padding-mobile: 16px;
+    --page-padding-desktop: 24px;
+    --card-border-radius: 12px;
+    --card-spacing: 16px;
+}
+
+/* Common card styles */
+.responsive-card {
+    border-radius: var(--card-border-radius);
+    width: 100%;
+}
+
+/* Mobile-first responsive containers */
+.responsive-container {
+    padding: var(--page-padding-mobile);
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Text sizes */
+.responsive-title {
+    font-size: 1.25rem !important;
+    line-height: 1.5 !important;
+}
+
+.responsive-subtitle {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+}
+
+.responsive-body {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+}
+
+/* Form field styles */
+.responsive-field {
+    font-size: 16px !important;
+    /* Prevents zoom on iOS */
+}
+
+/* Button styles */
+.responsive-btn {
+    height: 48px;
+    font-size: 1rem !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Grid adjustments */
+.responsive-grid {
+    display: grid;
+    gap: var(--card-spacing);
+    grid-template-columns: 1fr;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 600px) {
+    .mobile-full-height {
+        min-height: 100vh;
+    }
+
+    .mobile-no-radius {
+        border-radius: 0 !important;
+    }
+
+    .mobile-full-width {
+        width: 100vw !important;
+        margin-left: -16px;
+        margin-right: -16px;
+    }
+}
+
+/* Tablet and up */
+@media (min-width: 601px) {
+    .responsive-container {
+        padding: var(--page-padding-desktop);
+        max-width: 1200px;
+    }
+
+    .responsive-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    .responsive-title {
+        font-size: 1.5rem !important;
+    }
+
+    .responsive-subtitle {
+        font-size: 1.25rem !important;
+    }
+
+    .responsive-body {
+        font-size: 1rem !important;
+    }
+}
+
+/* Desktop specific */
+@media (min-width: 960px) {
+    .responsive-title {
+        font-size: 2rem !important;
+    }
+}
+
+/* Common utility classes */
+.full-width {
+    width: 100%;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-2 {
+    margin-bottom: 8px;
+}
+
+.mb-4 {
+    margin-bottom: 16px;
+}
+
+.mt-4 {
+    margin-top: 16px;
+}
+
+.pa-4 {
+    padding: 16px;
+}
+
+/* Touch target sizes */
+.touch-target {
+    min-height: 48px;
+    min-width: 48px;
+}
+
+/* List item styles */
+.list-item {
+    padding: 12px 16px;
+}
+
+/* Card content spacing */
+.card-content {
+    padding: 16px;
+}
+
+@media (min-width: 601px) {
+    .card-content {
+        padding: 24px;
+    }
+}
+
+/* Navigation adjustments */
+.nav-drawer {
+    width: 256px;
+}
+
+@media (max-width: 600px) {
+    .nav-drawer {
+        width: 100%;
+    }
+}
+
+/* Bottom navigation for mobile */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .bottom-nav {
+        display: flex;
+    }
+
+    .content-with-bottom-nav {
+        padding-bottom: 56px;
+    }
+}
