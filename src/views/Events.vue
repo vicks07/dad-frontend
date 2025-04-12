@@ -1,78 +1,197 @@
 <template>
-    <v-container>
-        <v-row>
-            <v-col cols="12">
-                <h1 class="text-h4 mb-6">Upcoming Events</h1>
-            </v-col>
-        </v-row>
-
-        <v-row>
-            <v-col cols="12" md="3">
-                <v-card class="mb-4">
-                    <v-card-title>Filters</v-card-title>
-                    <v-card-text>
-                        <v-select v-model="filters.type" :items="eventTypes" label="Event Type" clearable></v-select>
-
-                        <v-select v-model="filters.location" :items="locations" label="Location" clearable></v-select>
-
-                        <v-range-slider v-model="filters.price" :min="0" :max="100" :step="10" label="Price Range"
-                            thumb-label></v-range-slider>
-
-                        <v-checkbox v-model="filters.showPremium" label="Show Premium Events"></v-checkbox>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-
-            <v-col cols="12" md="9">
-                <v-row>
-                    <v-col v-for="event in filteredEvents" :key="event._id" cols="12" sm="6" lg="4">
-                        <v-card :class="{ 'premium-event': event.isPremium }" @click="viewEventDetails(event._id)">
-                            <v-img :src="getEventImage(event.type)" height="200" class="align-end">
-                                <v-chip v-if="event.isPremium" color="amber" class="ma-2" small>
-                                    Premium
-                                </v-chip>
-                            </v-img>
-
-                            <v-card-title>{{ event.title }}</v-card-title>
-
-                            <v-card-text>
-                                <div class="d-flex align-center mb-2">
-                                    <v-icon small class="mr-1">mdi-calendar</v-icon>
-                                    {{ formatDate(event.date) }}
-                                </div>
-                                <div class="d-flex align-center mb-2">
-                                    <v-icon small class="mr-1">mdi-clock</v-icon>
-                                    {{ event.time.start }} - {{ event.time.end }}
-                                </div>
-                                <div class="d-flex align-center mb-2">
-                                    <v-icon small class="mr-1">mdi-map-marker</v-icon>
-                                    {{ event.location.venue }}
-                                </div>
-                                <div class="d-flex align-center">
-                                    <v-icon small class="mr-1">mdi-currency-usd</v-icon>
-                                    {{ event.price === 0 ? 'Free' : `$${event.price}` }}
-                                </div>
-                            </v-card-text>
-
-                            <v-card-actions>
-                                <v-spacer></v-spacer>
-                                <v-btn color="primary" text @click.stop="registerForEvent(event)"
-                                    :disabled="event.registeredParticipants.includes(currentUser._id)">
-                                    {{ event.registeredParticipants.includes(currentUser._id)
-                                        ? 'Registered'
-                                    : 'Register' }}
+    <div class="events">
+        <v-container :class="{ 'pa-0': $vuetify.display.smAndDown }">
+            <!-- Header Section -->
+            <v-row>
+                <v-col cols="12">
+                    <v-card :class="{
+                        'mobile-card': $vuetify.display.smAndDown,
+                        'pa-6': $vuetify.display.mdAndUp,
+                        'pa-4': $vuetify.display.smAndDown
+                    }">
+                        <v-row align="center">
+                            <v-col cols="12" sm="8">
+                                <v-card-title class="px-0">
+                                    <v-icon start color="primary" class="mr-2">mdi-calendar-month</v-icon>
+                                    Events
+                                </v-card-title>
+                                <v-card-subtitle class="px-0">
+                                    Discover workshops, support groups, and social gatherings
+                                </v-card-subtitle>
+                            </v-col>
+                            <v-col cols="12" sm="4" class="text-sm-right">
+                                <v-btn color="primary" prepend-icon="mdi-plus" :block="$vuetify.display.smAndDown"
+                                    @click="showCreateDialog = true">
+                                    Create Event
                                 </v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </v-col>
-                </v-row>
-            </v-col>
-        </v-row>
+                            </v-col>
+                        </v-row>
+                    </v-card>
+                </v-col>
+            </v-row>
 
-        <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
-            {{ snackbarText }}
-        </v-snackbar>
-    </v-container>
+            <!-- Filters Section -->
+            <v-row class="mt-4">
+                <v-col cols="12">
+                    <v-card :class="{
+                        'mobile-card': $vuetify.display.smAndDown,
+                        'pa-4': true
+                    }">
+                        <v-row>
+                            <v-col cols="12" sm="4">
+                                <v-text-field v-model="search" label="Search events" prepend-inner-icon="mdi-magnify"
+                                    variant="outlined" density="comfortable" hide-details
+                                    class="mb-4 mb-sm-0"></v-text-field>
+                            </v-col>
+                            <v-col cols="6" sm="4">
+                                <v-select v-model="selectedType" :items="eventTypes" label="Event Type"
+                                    variant="outlined" density="comfortable" hide-details></v-select>
+                            </v-col>
+                            <v-col cols="6" sm="4">
+                                <v-select v-model="selectedSort" :items="sortOptions" label="Sort By" variant="outlined"
+                                    density="comfortable" hide-details></v-select>
+                            </v-col>
+                        </v-row>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+            <!-- Events Grid -->
+            <v-row class="mt-4">
+                <v-col v-for="event in filteredEvents" :key="event._id" cols="12" sm="6" md="4" lg="3">
+                    <v-card :to="'/events/' + event._id" :class="{
+                        'mobile-card': $vuetify.display.smAndDown,
+                        'event-card': true
+                    }" :ripple="true">
+                        <v-img :src="event.image || 'https://picsum.photos/350/200'" height="200" cover
+                            class="event-image">
+                            <template v-slot:placeholder>
+                                <v-row class="fill-height ma-0" align="center" justify="center">
+                                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                </v-row>
+                            </template>
+                        </v-img>
+
+                        <v-card-title class="pt-4 px-4">
+                            {{ event.title }}
+                        </v-card-title>
+
+                        <v-card-subtitle class="px-4">
+                            <v-icon size="small" class="mr-1">mdi-calendar</v-icon>
+                            {{ formatDate(event.date) }}
+                        </v-card-subtitle>
+
+                        <v-card-text class="px-4">
+                            <div class="d-flex align-center mb-2">
+                                <v-icon size="small" color="primary" class="mr-1">
+                                    {{ event.type === 'workshop' ? 'mdi-school' : 'mdi-account-group' }}
+                                </v-icon>
+                                <span class="text-caption text-primary">{{ event.type }}</span>
+                                <v-spacer></v-spacer>
+                                <v-chip size="small" :color="event.price > 0 ? 'primary' : 'success'" variant="tonal">
+                                    {{ event.price > 0 ? `$${event.price}` : 'Free' }}
+                                </v-chip>
+                            </div>
+
+                            <div class="d-flex align-center">
+                                <v-icon size="small" color="grey" class="mr-1">mdi-map-marker</v-icon>
+                                <span class="text-caption text-grey">{{ event.location }}</span>
+                            </div>
+                        </v-card-text>
+
+                        <v-divider></v-divider>
+
+                        <v-card-actions class="pa-4">
+                            <v-btn variant="tonal" color="primary" block
+                                :size="$vuetify.display.smAndDown ? 'large' : 'default'">
+                                View Details
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-col>
+
+                <!-- Empty State -->
+                <v-col v-if="filteredEvents.length === 0" cols="12">
+                    <v-card :class="{
+                        'mobile-card': $vuetify.display.smAndDown,
+                        'pa-8': true
+                    }">
+                        <div class="text-center">
+                            <v-icon size="64" color="grey">mdi-calendar-blank</v-icon>
+                            <h3 class="mt-4 text-h6">No Events Found</h3>
+                            <p class="text-body-2 text-grey">
+                                {{ search ? 'Try adjusting your search or filters' : 'No events are currently scheduled'
+                                }}
+                            </p>
+                            <v-btn color="primary" class="mt-4" @click="showCreateDialog = true">
+                                Create an Event
+                            </v-btn>
+                        </div>
+                    </v-card>
+                </v-col>
+            </v-row>
+        </v-container>
+
+        <!-- Create Event Dialog -->
+        <v-dialog v-model="showCreateDialog" :fullscreen="$vuetify.display.smAndDown" :width="600">
+            <v-card>
+                <v-toolbar color="primary" :title="'Create New Event'">
+                    <v-btn icon @click="showCreateDialog = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
+
+                <v-card-text class="pa-4">
+                    <v-form @submit.prevent="handleSubmit" ref="form">
+                        <v-text-field v-model="newEvent.title" label="Event Title" required
+                            :rules="[v => !!v || 'Title is required']" class="mb-4"></v-text-field>
+
+                        <v-textarea v-model="newEvent.description" label="Description" required
+                            :rules="[v => !!v || 'Description is required']" class="mb-4"></v-textarea>
+
+                        <v-row>
+                            <v-col cols="12" sm="6">
+                                <v-select v-model="newEvent.type" :items="eventTypes" label="Event Type" required
+                                    :rules="[v => !!v || 'Type is required']"></v-select>
+                            </v-col>
+                            <v-col cols="12" sm="6">
+                                <v-text-field v-model="newEvent.price" label="Price" type="number" prefix="$" min="0"
+                                    required :rules="[v => v >= 0 || 'Price must be positive']"></v-text-field>
+                            </v-col>
+                        </v-row>
+
+                        <v-row>
+                            <v-col cols="12" sm="6">
+                                <v-text-field v-model="newEvent.location" label="Location" required
+                                    :rules="[v => !!v || 'Location is required']"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" sm="6">
+                                <v-text-field v-model="newEvent.capacity" label="Capacity" type="number" min="1"
+                                    required :rules="[v => v > 0 || 'Capacity must be positive']"></v-text-field>
+                            </v-col>
+                        </v-row>
+
+                        <v-row>
+                            <v-col cols="12">
+                                <v-text-field v-model="newEvent.image" label="Image URL"
+                                    hint="Leave empty for default image" persistent-hint></v-text-field>
+                            </v-col>
+                        </v-row>
+                    </v-form>
+                </v-card-text>
+
+                <v-card-actions class="pa-4">
+                    <v-spacer></v-spacer>
+                    <v-btn variant="text" @click="showCreateDialog = false">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="primary" @click="handleSubmit" :loading="loading">
+                        Create Event
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+    </div>
 </template>
 
 <script>
@@ -89,6 +208,12 @@ export default {
         const snackbar = ref(false)
         const snackbarText = ref('')
         const snackbarColor = ref('error')
+        const form = ref(null)
+        const search = ref('')
+        const selectedType = ref('')
+        const selectedSort = ref('date')
+        const showCreateDialog = ref(false)
+        const loading = ref(false)
 
         const filters = ref({
             type: null,
@@ -113,18 +238,45 @@ export default {
             'Phoenix'
         ]
 
-        const events = computed(() => store.getters.events)
+        const events = ref([])
         const currentUser = computed(() => store.getters.currentUser)
-        const loading = computed(() => store.getters.loading)
+
+        const sortOptions = [
+            { title: 'Date', value: 'date' },
+            { title: 'Price', value: 'price' },
+            { title: 'Title', value: 'title' }
+        ]
 
         const filteredEvents = computed(() => {
-            return events.value.filter(event => {
-                if (filters.value.type && event.type !== filters.value.type) return false
-                if (filters.value.location && !event.location.city.includes(filters.value.location)) return false
-                if (event.price < filters.value.price[0] || event.price > filters.value.price[1]) return false
-                if (!filters.value.showPremium && event.isPremium) return false
-                return true
-            })
+            let filtered = [...events.value]
+
+            if (search.value) {
+                const searchLower = search.value.toLowerCase()
+                filtered = filtered.filter(event =>
+                    event.title.toLowerCase().includes(searchLower) ||
+                    event.description.toLowerCase().includes(searchLower)
+                )
+            }
+
+            if (selectedType.value) {
+                filtered = filtered.filter(event =>
+                    event.type.toLowerCase() === selectedType.value.toLowerCase()
+                )
+            }
+
+            switch (selectedSort.value) {
+                case 'date':
+                    filtered.sort((a, b) => new Date(a.date) - new Date(b.date))
+                    break
+                case 'price':
+                    filtered.sort((a, b) => a.price - b.price)
+                    break
+                case 'title':
+                    filtered.sort((a, b) => a.title.localeCompare(b.title))
+                    break
+            }
+
+            return filtered
         })
 
         const getEventImage = (type) => {
@@ -159,6 +311,53 @@ export default {
             }
         }
 
+        const newEvent = ref({
+            title: '',
+            description: '',
+            type: '',
+            price: 0,
+            location: '',
+            capacity: 10,
+            image: ''
+        })
+
+        const handleSubmit = async () => {
+            if (!form.value.validate()) return
+
+            loading.value = true
+            try {
+                const response = await fetch('/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${store.state.auth.token}`
+                    },
+                    body: JSON.stringify(newEvent.value)
+                })
+
+                if (!response.ok) throw new Error('Failed to create event')
+
+                const createdEvent = await response.json()
+                events.value.unshift(createdEvent)
+                showCreateDialog.value = false
+
+                // Reset form
+                newEvent.value = {
+                    title: '',
+                    description: '',
+                    type: '',
+                    price: 0,
+                    location: '',
+                    capacity: 10,
+                    image: ''
+                }
+            } catch (error) {
+                console.error('Error creating event:', error)
+            } finally {
+                loading.value = false
+            }
+        }
+
         onMounted(async () => {
             try {
                 await store.dispatch('fetchEvents')
@@ -182,32 +381,58 @@ export default {
             getEventImage,
             formatDate,
             viewEventDetails,
-            registerForEvent
+            registerForEvent,
+            form,
+            search,
+            selectedType,
+            selectedSort,
+            showCreateDialog,
+            newEvent,
+            sortOptions,
+            handleSubmit
         }
     }
 }
 </script>
 
 <style scoped>
-.premium-event {
-    border: 2px solid var(--v-amber-base);
+.events {
+    min-height: 100vh;
 }
 
-.v-card {
-    transition: transform 0.2s;
+.event-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-.v-card:hover {
-    transform: translateY(-4px);
-    cursor: pointer;
+.event-card .v-card-actions {
+    margin-top: auto;
 }
 
-.v-card-text {
-    padding: 16px;
+.event-image {
+    position: relative;
 }
 
-.v-btn {
-    text-transform: none;
-    letter-spacing: 0.5px;
+@media (max-width: 600px) {
+    .mobile-card {
+        border-radius: 0;
+        margin: 0 0 1rem 0;
+        box-shadow: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .mobile-card:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .event-card {
+        margin: 0;
+    }
+
+    .event-image {
+        border-radius: 0;
+    }
 }
 </style>

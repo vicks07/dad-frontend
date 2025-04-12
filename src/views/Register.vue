@@ -1,65 +1,69 @@
 <template>
-    <v-container class="fill-height" fluid>
-        <v-row align="center" justify="center">
-            <v-col cols="12" sm="8" md="6">
-                <v-card class="elevation-12">
+    <v-container class="fill-height pa-0 pa-sm-4" fluid>
+        <v-row align="center" justify="center" no-gutters>
+            <v-col cols="12" sm="10" md="8" lg="6">
+                <v-card class="elevation-12 mx-0 mx-sm-4">
                     <v-toolbar color="primary" dark flat>
-                        <v-toolbar-title>Create Account</v-toolbar-title>
+                        <v-toolbar-title class="text-body-1 text-sm-h6">Create Account</v-toolbar-title>
                     </v-toolbar>
-                    <v-card-text>
+                    <v-card-text class="pa-4 pa-sm-6">
                         <v-form @submit.prevent="handleSubmit" ref="form">
-                            <v-row>
+                            <v-row dense>
                                 <v-col cols="12" sm="6">
                                     <v-text-field v-model="firstName" label="First Name" name="firstName"
-                                        prepend-icon="mdi-account" :rules="nameRules" required></v-text-field>
+                                        prepend-icon="mdi-account" :rules="nameRules" required density="comfortable"
+                                        variant="outlined" class="mb-2"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-text-field v-model="lastName" label="Last Name" name="lastName"
-                                        prepend-icon="mdi-account" :rules="nameRules" required></v-text-field>
+                                        prepend-icon="mdi-account" :rules="nameRules" required density="comfortable"
+                                        variant="outlined" class="mb-2"></v-text-field>
                                 </v-col>
                             </v-row>
 
                             <v-text-field v-model="email" label="Email" name="email" prepend-icon="mdi-email"
-                                type="email" :rules="emailRules" required></v-text-field>
+                                type="email" :rules="emailRules" required density="comfortable" variant="outlined"
+                                class="mb-2"></v-text-field>
 
                             <v-text-field v-model="password" label="Password" name="password" prepend-icon="mdi-lock"
-                                type="password" :rules="passwordRules" required></v-text-field>
+                                type="password" :rules="passwordRules" required density="comfortable" variant="outlined"
+                                class="mb-2"></v-text-field>
 
                             <v-text-field v-model="confirmPassword" label="Confirm Password" name="confirmPassword"
-                                prepend-icon="mdi-lock-check" type="password" :rules="confirmPasswordRules"
-                                required></v-text-field>
+                                prepend-icon="mdi-lock-check" type="password" :rules="confirmPasswordRules" required
+                                density="comfortable" variant="outlined" class="mb-2"></v-text-field>
 
-                            <v-menu v-model="menu" :close-on-content-click="false" location="bottom">
+                            <v-menu v-model="menu" :close-on-content-click="false" location="bottom" min-width="auto"
+                                :max-width="290">
                                 <template v-slot:activator="{ props }">
                                     <v-text-field v-model="formattedDate" label="Date of Birth"
-                                        prepend-icon="mdi-calendar" readonly v-bind="props" :rules="dateRules"
-                                        required></v-text-field>
+                                        prepend-icon="mdi-calendar" readonly v-bind="props" :rules="dateRules" required
+                                        density="comfortable" variant="outlined" class="mb-2"></v-text-field>
                                 </template>
                                 <v-date-picker v-model="dateOfBirth" :max="maxDate" :min="minDate"
-                                    @update:model-value="menu = false"></v-date-picker>
+                                    @update:model-value="menu = false" elevation="0"></v-date-picker>
                             </v-menu>
 
                             <v-select v-model="gender" :items="genderOptions" label="Gender"
-                                prepend-icon="mdi-gender-male-female" :rules="genderRules" required></v-select>
+                                prepend-icon="mdi-gender-male-female" :rules="genderRules" required
+                                density="comfortable" variant="outlined" class="mb-2"></v-select>
+
+                            <v-btn color="primary" @click="handleSubmit" :loading="loading" :disabled="loading" block
+                                class="mt-4" size="large">
+                                Register
+                            </v-btn>
                         </v-form>
                     </v-card-text>
 
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" @click="handleSubmit" :loading="loading" :disabled="loading">
-                            Register
-                        </v-btn>
-                    </v-card-actions>
-
-                    <v-card-text class="text-center">
-                        <p class="mb-0">
+                    <v-card-text class="text-center pt-0">
+                        <p class="text-body-2 mb-0">
                             Already have an account?
-                            <router-link to="/login">Login here</router-link>
+                            <router-link to="/login" class="font-weight-medium">Login here</router-link>
                         </p>
                     </v-card-text>
                 </v-card>
 
-                <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
+                <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000" location="top" class="pa-3">
                     {{ snackbarText }}
                 </v-snackbar>
             </v-col>
@@ -208,11 +212,18 @@ export default {
 
 <style scoped>
 .v-card {
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
-.v-card-text {
-    padding: 24px;
+@media (max-width: 600px) {
+    .v-card {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    .v-container {
+        min-height: 100vh;
+    }
 }
 
 .v-btn {
@@ -223,5 +234,13 @@ export default {
 a {
     text-decoration: none;
     color: var(--v-primary-base);
+}
+
+.v-text-field :deep(.v-field__input) {
+    font-size: 16px !important;
+}
+
+.v-text-field :deep(.v-label) {
+    font-size: 16px !important;
 }
 </style>
